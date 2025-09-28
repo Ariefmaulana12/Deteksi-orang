@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Deteksi Orang Menggunakan Kamera</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            background-color: #f0f0f0;
+        }
+        video {
+            border: 2px solid #333;
+        }
+        #alert {
+            margin-top: 20px;
+            padding: 10px;
+            background-color: rgba(255, 0, 0, 0.6);
+            color: white;
+            font-weight: bold;
+            display: none;
+            border-radius: 5px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Deteksi Orang Menggunakan Kamera</h1>
+    <video id="video" width="640" height="480" autoplay></video>
+    <div id="alert">Orang Terdeteksi!</div>
+
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/coco-ssd"></script>
+
+    <script>
+        // Fungsi untuk mengakses kamera
+        async function setupCamera() {
+            const video = document.getElementById('video');
+            const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+            video.srcObject = stream;
+        }
+
+        // Fungsi untuk mendeteksi objek
+        async function detectObjects() {
+            const model = await cocoSsd.load();  // Memuat model deteksi objek
+            const video = document.getElementById('video');
+            const predictions = await model.detect(video);  // Mendeteksi objek di video
+
+            let detectedPerson = false;
+            let detectedOther = false;
+            let otherObject = '';
+
+            predictions.forEach(prediction => {
+                if (prediction.class === 'person') {
+                    detectedPerson = true;
+                } else if (prediction.score > 0.5) {
+                    detectedOther = true;
+                    otherObject = prediction.class;
+                }
+            });
+
+            const alertBox = document.getElementById('alert');
+            if (detectedPerson) {
+                alertBox.textContent = 'Ada orang terdeteksi!';
+                alertBox.style.display = 'block';
+                alert('Ada orang terdeteksi!');
+            } else if (detectedOther) {
+                alertBox.textContent = 'Objek tak terlihat terdeteksi: ' + otherObject;
+                alertBox.style.display = 'block';
+                alert('Objek tak terlihat terdeteksi: ' + otherObject);
+            } else {
+                alertBox.style.display = 'none';
+            }
+        }
+
+        // Menyiapkan kamera dan mulai deteksi
+        setupCamera();
+        setInterval(detectObjects, 1000);  // Deteksi setiap 1 detik
+    </script>
+</body>
+</html>
